@@ -22,7 +22,24 @@ class PABuilder:
     # ─────────────────────────────────────────
     def _primary_condition(self) -> dict:
         active = [c for c in self.conditions if c.get("status") == "active"]
-        return active[0] if active else {}
+        if not active:
+            return {}
+        # Prefer the condition most relevant to the proposed treatment
+        treatment_lower = self.proposed_treatment.lower()
+        keywords = {
+            "adalimumab": ["arthritis", "rheumatoid", "psoriasis", "crohn"],
+            "humira": ["arthritis", "rheumatoid", "psoriasis", "crohn"],
+            "methotrexate": ["arthritis", "rheumatoid", "cancer"],
+            "insulin": ["diabetes"],
+            "statin": ["hyperlipidemia", "cholesterol", "cardiovascular"],
+        }
+        for drug, related_conditions in keywords.items():
+            if drug in treatment_lower:
+                for condition in active:
+                    name_lower = condition.get("name", "").lower()
+                    if any(kw in name_lower for kw in related_conditions):
+                        return condition
+        return active[0]
 
     # ─────────────────────────────────────────
     # Helper: get stopped / discontinued meds
@@ -342,4 +359,4 @@ class PABuilder:
                 "packet_ready": True,
                 "generated_at": self.generated_at
             }
-        }
+                }
